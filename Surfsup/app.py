@@ -38,7 +38,6 @@ def get_last_year_date():
       return last_year_date
 
 
-
 #################################################
 # Flask Routes
 #################################################
@@ -87,43 +86,35 @@ def tobs():
  
 
 @app.route("/api/v1.0/<start>")
-def temp_stats(start):
-      
+@app.route("/api/v1.0/<start>/<end>")
+def temp_start_end(start, end=None):
       temp_query=[
-            func.min(Measurement.tobs),
+           func.min(Measurement.tobs),
             func.avg(Measurement.tobs),
-            func.max(Measurement.tobs)
-      ]
+            func.max(Measurement.tobs)]
       
-      results = session.query(*temp_query).filter(Measurement.date >= start).all()
-      session.close()  
+      
+      if end is None: 
+            
+            results = session.query(*temp_query).filter(Measurement.date >= start).all()
+            session.close()  
+            temp_dict={
+            "tmin": results[0][0],
+            "tavg": results[0][1],
+            'tmax': results[0][2]}
+      
+            
+            return jsonify(temp_dict)
 
+      results = session.query(*temp_query).filter(Measurement.date >= start, Measurement.date <= end).all()
+     
       temp_dict={
             "tmin": results[0][0],
             "tavg": results[0][1],
-            'tmax': results[0][2]
-      }     
-
-      return jsonify(temp_dict)
-
-@app.route("/api/v1.0/<start>/<end>")
-def temp_start_end(start, end):
+            'tmax': results[0][2]}
       
-      temp_query = [
-            func.min(Measurement.tobs),
-            func.avg(Measurement.tobs),
-            func.max(Measurement.tobs)
-    ]
-      
-      results = session.query(*temp_query).filter(Measurement.date >= start, Measurement.date <= end).all()
-     
       session.close()
 
-      temp_dict = {
-            "tmin": results[0][0],
-            "tavg": results[0][1],
-            "tmax": results[0][2]
-    }
       return jsonify(temp_dict)
 
 if __name__ == "__main__":
